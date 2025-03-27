@@ -1,84 +1,54 @@
+pip install flask
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
 # Dicionário para armazenar os livros por gênero
 biblioteca = {}
 
-# Função para adicionar um gênero
-def adicionar_genero(genero):
+@app.route('/')
+def home():
+    return "Bem-vindo à Biblioteca Online!"
+
+# Endpoint para adicionar um gênero
+@app.route('/adicionar_genero', methods=['POST'])
+def adicionar_genero():
+    genero = request.json.get('genero')
     if genero not in biblioteca:
         biblioteca[genero] = []
-        print(f'Gênero "{genero}" adicionado com sucesso!')
+        return jsonify({'message': f'Gênero "{genero}" adicionado com sucesso!'}), 201
     else:
-        print(f'Gênero "{genero}" já existe.')
+        return jsonify({'message': f'Gênero "{genero}" já existe.'}), 400
 
-# Função para adicionar um livro a um gênero específico
-def adicionar_livro(genero, livro):
+# Endpoint para adicionar um livro
+@app.route('/adicionar_livro', methods=['POST'])
+def adicionar_livro():
+    genero = request.json.get('genero')
+    livro = request.json.get('livro')
     if genero in biblioteca:
         if livro not in biblioteca[genero]:
             biblioteca[genero].append(livro)
-            print(f'Livro "{livro}" adicionado ao gênero "{genero}" com sucesso!')
+            return jsonify({'message': f'Livro "{livro}" adicionado ao gênero "{genero}" com sucesso!'}), 201
         else:
-            print(f'Livro "{livro}" já está armazenado no gênero "{genero}".')
+            return jsonify({'message': f'Livro "{livro}" já está armazenado no gênero "{genero}".'}), 400
     else:
-        opcao = input(f'Gênero "{genero}" não encontrado. Deseja adicioná-lo? (s/n): ')
-        if opcao.lower() == 's':
-            adicionar_genero(genero)
-            adicionar_livro(genero, livro)
+        return jsonify({'message': f'Gênero "{genero}" não encontrado.'}), 404
 
-# Função para remover um livro de um gênero específico
-def remover_livro(genero, livro):
+# Endpoint para exibir todos os livros
+@app.route('/exibir_livros', methods=['GET'])
+def exibir_livros():
+    return jsonify(biblioteca), 200
+
+# Endpoint para remover um livro
+@app.route('/remover_livro', methods=['DELETE'])
+def remover_livro():
+    genero = request.json.get('genero')
+    livro = request.json.get('livro')
     if genero in biblioteca and livro in biblioteca[genero]:
         biblioteca[genero].remove(livro)
-        print(f'Livro "{livro}" removido do gênero "{genero}" com sucesso!')
+        return jsonify({'message': f'Livro "{livro}" removido do gênero "{genero}".'}), 200
     else:
-        print(f'Livro "{livro}" ou gênero "{genero}" não encontrado.')
+        return jsonify({'message': f'Livro ou gênero não encontrado.'}), 404
 
-# Função para exibir os livros de todos os gêneros em ordem alfabética
-def exibir_livros():
-    print("Livros organizados por gênero (em ordem alfabética):")
-    for genero in sorted(biblioteca.keys()):
-        print(f'\nGênero: {genero}')
-        for livro in sorted(biblioteca[genero]):
-            print(f'- {livro}')
-
-# Função para procurar um livro em todos os gêneros
-def procurar_livro(nome):
-    encontrado = False
-    for genero, livros in biblioteca.items():
-        if nome in livros:
-            print(f'Livro "{nome}" encontrado no gênero "{genero}".')
-            encontrado = True
-            break
-    if not encontrado:
-        print(f'Livro "{nome}" não encontrado.')
-
-# Loop principal para interagir com o usuário
-while True:
-    print("\nOpções:")
-    print("1. Adicionar Gênero")
-    print("2. Adicionar Livro")
-    print("3. Remover Livro")
-    print("4. Exibir Livros")
-    print("5. Procurar Livro")
-    print("6. Sair")
-    opcao = input("Escolha uma opção: ")
-
-    if opcao == '1':
-        genero = input("Digite o nome do gênero: ")
-        adicionar_genero(genero)
-    elif opcao == '2':
-        genero = input("Digite o nome do gênero: ")
-        livro = input("Digite o nome do livro: ")
-        adicionar_livro(genero, livro)
-    elif opcao == '3':
-        genero = input("Digite o nome do gênero: ")
-        livro = input("Digite o nome do livro: ")
-        remover_livro(genero, livro)
-    elif opcao == '4':
-        exibir_livros()
-    elif opcao == '5':
-        nome = input("Digite o nome do livro: ")
-        procurar_livro(nome)
-    elif opcao == '6':
-        print("Saindo...")
-        break
-    else:
-        print("Opção inválida. Tente novamente.")
+if __name__ == '__main__':
+    app.run(debug=True)
